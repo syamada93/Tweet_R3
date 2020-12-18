@@ -54,6 +54,9 @@ library(rsconnect)
 
 load("Tweet_HR_R02_data4.RData")
 
+pal <- colorNumeric(palette="Blues", domain=c(-10,max(AME_D$Rank)))
+pal2 <- colorNumeric(palette="Blues", domain=c(-10,max(AME_DH$Rank)))
+
 # Define UI for application that draws a histogram
 ui <- fluidPage(
   
@@ -359,6 +362,7 @@ server <- function(input, output) {
   
   
 }
+
 
 
 # Run the application 
