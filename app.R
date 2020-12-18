@@ -12,9 +12,9 @@ if(!require(tidyr))
   install.packages("tidyr")
 library(tidyr)
 
-# if(!require(stringi))
-#   install.packages("stringi")
-# library(stringi)
+if(!require(stringi))
+  install.packages("stringi")
+library(stringi)
 
 if(!require(ggplot2))
   install.packages("ggplot2")
@@ -44,13 +44,13 @@ if(!require(maptools))
   install.packages("maptools")
 library(maptools)
 
-# if(!require(sf))
-#   install.packages("sf")
-# library(sf)
+if(!require(sf))
+  install.packages("sf")
+library(sf)
 
-# if(!require(rsconnect))
-#   install.packages("rsconnect")
-# library(rsconnect)
+if(!require(rsconnect))
+  install.packages("rsconnect")
+library(rsconnect)
 
 load("Tweet_HR_R02_data4.RData")
 
@@ -363,7 +363,6 @@ server <- function(input, output) {
 
 # Run the application 
 shinyApp(ui = ui, server = server)
-
 
 
 
