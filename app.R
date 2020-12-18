@@ -44,9 +44,9 @@ if(!require(maptools))
   install.packages("maptools")
 library(maptools)
 
-# if(!require(sf))
-#   install.packages("sf")
-# library(sf)
+if(!require(sf))
+  install.packages("sf")
+library(sf)
 
 # if(!require(rsconnect))
 #   install.packages("rsconnect")
@@ -363,7 +363,6 @@ server <- function(input, output) {
 
 # Run the application 
 shinyApp(ui = ui, server = server)
-
 
 
 
