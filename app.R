@@ -52,8 +52,6 @@ library(maptools)
 #   install.packages("rsconnect")
 # library(rsconnect)
 
-
-
 load("Tweet_HR_R02_data4.RData")
 
 # Define UI for application that draws a histogram
