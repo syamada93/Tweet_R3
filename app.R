@@ -57,11 +57,15 @@ load("Tweet_HR_R02_data4.RData")
 pal <- colorNumeric(palette="Blues", domain=c(-10,max(AME_D$Rank)))
 pal2 <- colorNumeric(palette="Blues", domain=c(-10,max(AME_DH$Rank)))
 
+m=7
+d=7
+h="-"
+
 # Define UI for application that draws a histogram
 ui <- fluidPage(
   
   # Application title
-  titlePanel("Tweet"),
+  titlePanel("令和2年7月豪雨ツイート-降水量と共起ネットワーク-"),
   
   # Sidebar with a slider input for number of bins 
   sidebarLayout(
@@ -136,15 +140,26 @@ server <- function(input, output) {
     if(h!="-"){
       TFS <-
         TFSSS %>%
-        filter(Month==m,Day==d,Hour==h)
+        filter(Month==m,Day==d,Hour==10)
+    }
+    if(h=="-"){
+      TFS <-
+        TFSSS %>%
+        filter(Month==m,Day==d)
+    }
       
       rk=100
       cln=10
       
       TFS0 <-
         TFS %>%
-        distinct(word1,word2,freq,rate,Ranks,rate1,rate2,word) %>%
-        
+        distinct(word1,word2,freq,rate,Ranks,Freq.x,Freq.y,word,Day,Hour) %>%
+        group_by(word1,word2,word) %>%
+        summarise(freq=sum(freq),Freq.x=sum(Freq.x),Freq.y=sum(Freq.y)) %>%
+        ungroup() %>%
+        mutate(total=sum(freq),rate=freq/total) %>%
+        mutate(rate1=freq/Freq.x,rate2=freq/Freq.y) %>%
+        mutate(Ranks=dense_rank(-freq)) %>%
         arrange(Ranks,desc(rate1),desc(rate2)) %>%
         # filter(freq>1) %>%
         filter(Ranks<=rk) %>%
@@ -198,14 +213,20 @@ server <- function(input, output) {
       TFS00 <-
         TFS3 %>%
         distinct(word1,word2,freq,rate,Ranks,rate1,rate2,word) %>%
+        distinct(word1,word2,word) %>%
+        left_join(TFS0) %>%
+        inner_join(TFS2_cl,by=c("word1"="word")) %>%
+        inner_join(TFS2_cl,by=c("word2"="word")) %>%
         arrange(Ranks)
       
       TFS3_cl <-
         data.frame() %>%
-        rbind(TFS3 %>%
+        rbind(TFS00 %>%
                 select(word=word1,Freq=Freq.x,Cluster=Cluster.x)) %>%
-        rbind(TFS3 %>%
+        rbind(TFS00 %>%
                 select(word=word2,Freq=Freq.y,Cluster=Cluster.y)) %>%
+        group_by(word,Cluster) %>%
+        mutate(Freq=max(Freq)) %>%
         distinct() %>%
         mutate(Cluster=factor(Cluster))
       
@@ -231,8 +252,8 @@ server <- function(input, output) {
         geom_edge_link(aes(width = rate, alpha = rate1),color="royalblue", #
                        arrow = arrow(length = unit(3,'mm')), end_cap = circle(5,'mm'),force_flip = F) +
         geom_node_point(aes(col = Cluster, size = Freq)) +
-        geom_node_text(aes(label = name), repel = F, size=7.5) +
-        ggtitle(paste0("",min(TFS3$JTime),"~",max(TFS3$JTime),"\n",nrow(TFS00),"rules")) +
+        geom_node_text(aes(label = name), repel = F, size=9) +
+        ggtitle(paste0("",min(TFS3$JTime),"~",max(TFS3$JTime),"\n",nrow(TFS00)," rules")) +
         theme_graph(title_size = 30) +
         scale_edge_alpha(range = c(0,1)) +
         scale_size_continuous(range = c(5,30),breaks = c(min(br),max(br))) + #,breaks = seq(0,floor(mn/keta)*keta,by = keta)
@@ -247,7 +268,6 @@ server <- function(input, output) {
       
       
       plot(p)
-    }
     
   })
   
@@ -314,6 +334,7 @@ server <- function(input, output) {
   })
   
   output$plot2 <- renderPlot({
+    tdfk="岐阜県"
     tdfk=input$TDFK
     
     tfk=TDFK[TDFK$Jname==tdfk]$jn
@@ -324,12 +345,12 @@ server <- function(input, output) {
       left_join(TDFK %>% select(Jname,Name,jn)) %>%
       filter(Jname %in% tdfk) %>%
       group_by(Year,Month,Day,Hour) %>%
-      summarise(m=max(Rain)) %>%
+      summarise(m=sum(Rain)) %>%
       right_join(MDH) %>%
       complete(Year,Month,Day,Hour,fill=list(m=0)) %>%
       mutate(Time=as.POSIXct(paste(Year,Month,Day,Hour),format="%Y %m %d %H"))
     
-    b=35
+    b=5
     TDSC <-
       TDS2 %>%
       ungroup() %>%
@@ -340,7 +361,7 @@ server <- function(input, output) {
       mutate(m1=m*10) %>%
       mutate(m2=m*b)
     
-    l=c(0,max(100,max(TDSC$n),max(TDSC$m),3600))
+    l=c(0,max(100,max(TDSC$n),max(TDSC$m2),4000))
     
     TDSC %>%
       filter(Day<10) %>%
@@ -349,11 +370,11 @@ server <- function(input, output) {
       geom_text(data = TDSC %>% filter(n==max(n)),
                 aes(y=n+100,label=format(Time,"%H:00")),size=5) +
       geom_line(aes(y=m2),size=1,col="blue") +
-      labs(x="",y="Count",fill="") +
+      labs(x="",y="ツイート数",fill="") +
       scale_y_continuous(breaks = seq(0,1000000,500),expand = c(0, 0),limits=l,
-                         sec.axis = sec_axis(~ . / b, name = "Rain (mm)",seq(0,1000,5))) + #
+                         sec.axis = sec_axis(~ . / b, name = "降水量(mm)",seq(0,1000,100))) + #
       scale_x_datetime(date_breaks = "1 day",date_minor_breaks = "1 hour",date_labels = "%d") +
-      ggtitle(paste(tf,"Tweet count & Precipitation")) +
+      ggtitle(paste(tfk,"ツイート数と降水量の推移")) +
       theme(text = element_text(size=30)) +
       theme(axis.text.y = element_text(size=20)) +
       theme(axis.title.x = element_blank()) +
