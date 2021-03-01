@@ -329,7 +329,7 @@ server <- function(input, output) {
       addCircles(data=RainS,lng=~lng,lat=~lat, color=~cl, stroke=FALSE,fillOpacity = 1,radius = 10000,
                  label = ~paste0(Jname," ",Area," ",Rain,"mm"), labelOptions = list(textsize="20px"),
                  layerId=paste0("X",1:nrow(RainS))) %>%
-      addLegend(data=RainS %>% distinct(cRank,.keep_all = T), position='topright', color=~cl,labels = ~cRank,
+      addLegend(data=RainS %>% distinct(cRank,.keep_all = T), position='topright', color=~cl,labels = ~cRank,opacity = 1,
                 title = paste0(m,"/",d," ",h,":00","<br>","(mm)"))
   })
   
