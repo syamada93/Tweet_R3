@@ -58,7 +58,7 @@ pal <- colorNumeric(palette="Blues", domain=c(-10,max(AME_D$Rank)))
 pal2 <- colorNumeric(palette="Blues", domain=c(-10,max(AME_DH$Rank)))
 
 m=7
-d=7
+d="Auto"
 h="-"
 
 # Define UI for application that draws a histogram
@@ -76,16 +76,16 @@ ui <- fluidPage(
                            selected = 7),offset = 1),
       column(1,selectInput("Day",
                            label = "Day",
-                           choices = c(unique(1:10),"Auto"),
-                           selected = 6)),
+                           choices = c(unique(1:9),"Auto"),
+                           selected = 7)),
       column(1,selectInput("Hour",
                            label = "Hour",
                            choices = c("-",unique(0:23),"Auto"),
-                           selected = "16")),
+                           selected = "-")),
       column(1,selectInput("TDFK",
                            label = "Prefectures",
                            choices = TDFK$Jname,
-                           selected = TDFK$Jname[40]))
+                           selected = TDFK$Jname[21]))
     ),
     
     # Show a plot of the generated distribution
@@ -113,34 +113,22 @@ server <- function(input, output) {
   })
   
   output$plot <- renderPlot({
+    if(input$Day=="Auto"|input$Hour=="Auto")
+      refreshPlot()
+    
     m=input$Month
     d=input$Day
     h=input$Hour
     
-    if(input$Day=="Auto"|input$Hour=="Auto"){
-      refreshPlot()
-      if(isolate(vals$counter)>=24){
-        vals$counter <- 0
-        if(input$Day=="Auto")
-          vals0$counter <- isolate(vals0$counter) + 1
-      }
-      if(isolate(vals0$counter)>10)
-        vals0$counter <- 1
-      
-      if(input$Day=="Auto")
-        d=isolate(vals0$counter)
-      if(input$Hour=="Auto")
-        h=isolate(vals$counter)
-      
-      # vals$counter <- isolate(vals$counter) + 1
-      # if(input$Day=="Auto"&input$Hour!="Auto")
-      #   vals0$counter <- isolate(vals0$counter) + 1
-    }
+    if(input$Day=="Auto")
+      d=isolate(vals0$counter)
+    if(input$Hour=="Auto")
+      h=isolate(vals$counter)
     
     if(h!="-"){
       TFS <-
         TFSSS %>%
-        filter(Month==m,Day==d,Hour==10)
+        filter(Month==m,Day==d,Hour==h)
     }
     if(h=="-"){
       TFS <-
@@ -272,43 +260,51 @@ server <- function(input, output) {
   })
   
   observe({
+    if(input$Day=="Auto"|input$Hour=="Auto")
+      refreshPlot()
+      
     m=input$Month
     d=input$Day
     h=input$Hour
+    
+    if(input$Day=="Auto")
+      d=isolate(vals0$counter)
+    if(input$Hour=="Auto")
+      h=isolate(vals$counter)
     
     # m=7
     # d=6
     # h="-"
     # h=1
+
+    # if(input$Day=="Auto"|input$Hour=="Auto"){
+    #   refreshPlot()
+    # 
+    #   if(isolate(vals$counter)>=24){
+    #     vals$counter <- 0
+    #     if(input$Day=="Auto")
+    #       vals0$counter <- isolate(vals0$counter) + 1
+    #   }
+    #   if(isolate(vals0$counter)>=10)
+    #     vals0$counter <- 1
+    # 
+    # 
+    #   if(input$Day=="Auto")
+    #     d=isolate(vals0$counter)
+    #   if(input$Hour=="Auto")
+    #     h=isolate(vals$counter)
+    # 
+    # 
+    #   vals$counter <- isolate(vals$counter) + 1
+    #   if(input$Day=="Auto"&input$Hour!="Auto")
+    #     vals0$counter <- isolate(vals0$counter) + 1
+    # }
     
     if(h=="-"){
       RainS <-
         AME_D %>%
         filter(Month==m,Day==d) %>%
         mutate(cl=pal(Rank))
-    }
-    
-    if(input$Day=="Auto"|input$Hour=="Auto"){
-      refreshPlot()
-      
-      if(isolate(vals$counter)>=24){
-        vals$counter <- 0
-        if(input$Day=="Auto")
-          vals0$counter <- isolate(vals0$counter) + 1
-      }
-      if(isolate(vals0$counter)>10)
-        vals0$counter <- 1
-      
-      
-      if(input$Day=="Auto")
-        d=isolate(vals0$counter)
-      if(input$Hour=="Auto")
-        h=isolate(vals$counter)
-      
-      
-      vals$counter <- isolate(vals$counter) + 1
-      if(input$Day=="Auto"&input$Hour!="Auto")
-        vals0$counter <- isolate(vals0$counter) + 1
     }
     
     if(h!="-"){
@@ -381,7 +377,32 @@ server <- function(input, output) {
       theme(legend.position = "")
   })
   
-  
+  observe({
+    if(input$Day=="Auto"|input$Hour=="Auto"){
+      refreshPlot()
+      
+      if(input$Hour=="Auto")
+      vals$counter <- isolate(vals$counter) + 1
+      if(input$Day=="Auto"&input$Hour!="Auto")
+        vals0$counter <- isolate(vals0$counter) + 1
+      
+      if(isolate(vals$counter)>=24){
+        vals$counter <- 0
+        if(input$Day=="Auto"&input$Hour=="Auto")
+          vals0$counter <- isolate(vals0$counter) + 1
+      }
+      if(isolate(vals0$counter)>=10)
+        vals0$counter <- 1
+      
+      # if(input$Day=="Auto")
+      #   d=isolate(vals0$counter)
+      # if(input$Hour=="Auto")
+      #   h=isolate(vals$counter)
+      
+      print(c(vals$counter,vals0$counter))
+      
+    }
+  })
 }
 
 
